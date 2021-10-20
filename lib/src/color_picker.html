@@ -23,9 +23,15 @@
 
   <div class="alpha slider" #alpha (mousemove)="alphaMove($event)"
     (mouseout)="sliderOut" (click)="alphaClick">
-   <div [style.left]="alphaPos" class="cursor"></div>
+    <div [style.left]="alphaPos" class="cursor"></div>
   </div>
  </div>
+</div>
+
+<div class="css">
+ <material-input label="CSS" floatingLabel [(ngModel)]="inputCss"
+ (blur)="blur()">
+ </material-input>
 </div>
 
 <!--<div style="width: 200px; height: 200px;"

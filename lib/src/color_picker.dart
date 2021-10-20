@@ -10,6 +10,16 @@ const RGB_MAX = 255.0;
 const HUE_MAX = 360.0;
 const SV_MAX = 100.0;
 const pointerHalfSize = 10;
+const alphaGutter = 8, alphaHalfGutter = 4;
+
+extension PickerHsv on Hsv {
+  String toCss() => toRgb.toCss();
+}
+
+extension PickerRgb on Rgb {
+  String toCss() => 'rgba($r, $g, $b, ${a == 0 || a == 1 ?
+    '$a' : a.toStringAsFixed(2)})';
+}
 
 @Component(
   selector: 'color-picker',
@@ -18,9 +28,10 @@ const pointerHalfSize = 10;
   changeDetection: ChangeDetectionStrategy.OnPush,
   directives: [
     coreDirectives,
-    MaterialFabComponent,
+    materialInputDirectives,
     MaterialIconComponent,
-    MaterialRippleComponent
+    MaterialRippleComponent,
+    MaterialInputComponent
   ]
 )
 class ColorPickerComponent implements OnInit {
@@ -38,8 +49,26 @@ class ColorPickerComponent implements OnInit {
   @Output()
   Stream<Rgb> get rgbChange => _rgbChange.stream;
 
+  bool _invalidCss = false;
+
   String _css;
   String get css => _css;
+
+  String _inputCss;
+  String get inputCss => _inputCss;
+  set inputCss(String value) {
+    _inputCss = value;
+
+    try {
+      final n = Rgb.parse(value);
+
+      rgb = n;
+      clear();
+    } catch (e) {
+      _invalidCss = true;
+      print('Invalid color $value');
+    }
+  }
 
   String _hueCss;
   String get hueCss => _hueCss;
@@ -47,7 +76,7 @@ class ColorPickerComponent implements OnInit {
   String _huePos;
   String get huePos => _huePos;
 
-  String _alphaPos;
+  String _alphaPos, _alphaOriginPos;
   String get alphaPos => _alphaPos;
 
   String _saturationLeft;
@@ -73,7 +102,7 @@ class ColorPickerComponent implements OnInit {
   @ViewChild('selectedRipple')
   MaterialRippleComponent selectedRipple;
 
-  Rectangle _hueRect, _saturationRect;
+  Rectangle _hueRect, _saturationRect, _alphaRect;
 
   Hsv RGBtoHSV(Rgb rgb) {
     // It converts [0,255] format, to [0,1]
@@ -108,6 +137,14 @@ class ColorPickerComponent implements OnInit {
     );
   }
 
+  void blur() {
+    if (_invalidCss) {
+      print('fuck');
+      _inputCss = _css;
+      _invalidCss = false;
+    }
+  }
+
   void saturationMove(MouseEvent event) {
     _saturationRect ??= saturation.getBoundingClientRect();
     final posX = event.page.x - _saturationRect.left;
@@ -124,7 +161,7 @@ class ColorPickerComponent implements OnInit {
         v: (1 - math.max(v, -0)) * SV_MAX,
     );
 
-    _css = _hsv.clone(a: rgb.a).css;
+    _inputCss = _css = _hsv.clone(a: rgb.a).toCss();
   }
 
   void hueClick(MouseEvent event) {
@@ -164,48 +201,58 @@ class ColorPickerComponent implements OnInit {
     _hsv = Hsv(h: math.max(v, -0), s: 100, v: 100);
     _calcSaturationPos();
 
-    _hueCss = _hsv.css;
-    _css = _hsv.clone(a: rgb.a).css;
+    _hueCss = _hsv.toCss();
+    _inputCss = _css = _hsv.clone(a: rgb.a).toCss();
   }
 
   void alphaClick(MouseEvent event) {
+    _alphaOriginPos = alphaPos;
     rgb = alphaMove(event);
     _rgbChange.add(rgb);
   }
 
   Rgb alphaMove(MouseEvent event) {
-    _hueRect ??= hue.getBoundingClientRect();
-    final pos = event.page.x - _hueRect.left;
-    final a = pos / _hueRect.width;
+    _alphaRect ??= alpha.getBoundingClientRect();
+    final pos = event.page.x - (_alphaRect.left + alphaHalfGutter);
+    var a = pos / (_alphaRect.width - alphaGutter);
+    final mod = math.pow(10.0, 2);
 
+    a = (a * mod).round().toDouble() / mod;
     _alphaPos = '${pos - pointerHalfSize}px';
 
-    final h2 = _rgb.clone(a: math.min(math.max(a, 0), 1));
+    final h2 = _rgb.clone(a: 1 - math.min(math.max(a, 0), 1));
 
-    _css = h2.css;
+    _inputCss = _css = h2.toCss();
 
     return h2;
   }
 
   void _calcSaturationPos() {
-    final srect = saturation.getBoundingClientRect();
+    _saturationRect ??= saturation.getBoundingClientRect();
 
-    _saturationLeft = '${((_hsv.s / SV_MAX) * srect.width) - pointerHalfSize}px';
-    _saturationTop = '${((1 - (_hsv.v / SV_MAX)) * srect.height) - pointerHalfSize}px';
+    _saturationLeft = '${((_hsv.s / SV_MAX) * _saturationRect.width) -
+        pointerHalfSize}px';
+    _saturationTop = '${((1 - (_hsv.v / SV_MAX)) * _saturationRect.height) -
+        pointerHalfSize}px';
   }
 
   void clear() {
     final rgb = _rgb.clone(a: 1);
     final width = (_hueRect ?? hue.getBoundingClientRect()).width;
+    final alphaWidth = (_alphaRect ??= alpha.getBoundingClientRect()).width
+        - alphaGutter;
 
     _hsv = RGBtoHSV(rgb);
 
     _calcSaturationPos();
     _huePos = '${(_hsv.h * width) - pointerHalfSize}px';
-    _alphaPos = '${(_rgb.a * width) - pointerHalfSize}px';
-    _css = _rgb.css;
-    _hueCss = (_currentHsv ?? _hsv).css;
+    _alphaPos = _alphaOriginPos ??
+        '${(((1 - _rgb.a) * alphaWidth) - pointerHalfSize)}px';
+    _inputCss = _css = _rgb.toCss();
+    _hueCss = (_currentHsv ?? _hsv).toCss();
     _hueRect = null;
+
+    print('Blured');
   }
 
   @override
