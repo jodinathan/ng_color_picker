@@ -36,26 +36,47 @@ extension PickerRgb on Rgb {
 )
 class ColorPickerComponent implements OnInit {
   final StreamController<Rgb> _rgbChange = StreamController<Rgb>();
+  final StreamController<String> _cssChange = StreamController<String>();
+  final Rgb defaultColor = Rgb(r: 71, g: 220, b: 220, a: 1);
+  final ChangeDetectorRef _cd;
 
   Hsv _currentHsv;
+  bool _initiated = false;
+  @HostBinding('class.initiated')
+  bool get initiated => _initiated;
+
+  ColorPickerComponent(this._cd);
 
   Rgb _rgb;
   @Input()
   set rgb(Rgb value) {
     _rgb = value;
+    _inputError = null;
+    _invalidCss = false;
   }
   Rgb get rgb => _rgb;
 
+  @Input()
+  bool manualInitiate = false;
+
   @Output()
   Stream<Rgb> get rgbChange => _rgbChange.stream;
+
+  @HostBinding('class.bordered')
+  @Input()
+  bool bordered = true;
 
   bool _invalidCss = false;
 
   String _css;
   String get css => _css;
 
+  String _inputError;
+  String get inputError => _inputError;
+
   String _inputCss;
   String get inputCss => _inputCss;
+  @Input('css')
   set inputCss(String value) {
     _inputCss = value;
 
@@ -63,12 +84,19 @@ class ColorPickerComponent implements OnInit {
       final n = Rgb.parse(value);
 
       rgb = n;
-      clear();
+      _currentHsv = RGBtoHSV(_rgb.clone(a: 1));
+
+      if (_initiated) {
+        _refresh();
+      }
     } catch (e) {
       _invalidCss = true;
-      print('Invalid color $value');
+      _inputError = ' ';
     }
   }
+
+  @Output()
+  Stream<String> get cssChange => _cssChange.stream;
 
   String _hueCss;
   String get hueCss => _hueCss;
@@ -137,28 +165,24 @@ class ColorPickerComponent implements OnInit {
     );
   }
 
-  void blur() {
-    if (_invalidCss) {
-      print('fuck');
-      _inputCss = _css;
-      _invalidCss = false;
-    }
-  }
-
   void saturationMove(MouseEvent event) {
     _saturationRect ??= saturation.getBoundingClientRect();
     final posX = event.page.x - _saturationRect.left;
-    final s = posX / _saturationRect.width;
+    final sraw = posX / _saturationRect.width;
     final posY = event.page.y - _saturationRect.top;
-    final v = posY / _saturationRect.height;
+    final vraw = posY / _saturationRect.height;
 
     _saturationLeft = '${posX - pointerHalfSize}px';
     _saturationTop = '${posY - pointerHalfSize}px';
 
+    final h = (_hsv ?? RGBtoHSV(_rgb)).h;
+    final s = math.max(sraw, 0) * SV_MAX;
+    final v = (1 - math.max(vraw, 0)) * SV_MAX;
+
     _hsv = Hsv(
-        h: (_hsv ?? RGBtoHSV(_rgb)).h,
-        s: math.max(s, -0) * SV_MAX,
-        v: (1 - math.max(v, -0)) * SV_MAX,
+        h: h,
+        s: s,
+        v: v,
     );
 
     _inputCss = _css = _hsv.clone(a: rgb.a).toCss();
@@ -169,9 +193,14 @@ class ColorPickerComponent implements OnInit {
     _currentHsv = _hsv.clone(a: 1);
   }
 
+  void _add(Rgb newRgb) {
+    rgb = newRgb;
+    _rgbChange.add(newRgb);
+    _cssChange.add(newRgb.toCss());
+  }
+
   void click(MouseEvent event, {bool ripple = true}) {
-    rgb = (_hsv.clone(a: rgb.a)).toRgb;
-    _rgbChange.add(rgb);
+    _add((_hsv.clone(a: rgb.a)).toRgb);
 
     if (ripple) {
       saturationRipple.createRipple(event.client.x, event.client.y);
@@ -182,13 +211,13 @@ class ColorPickerComponent implements OnInit {
 
   @HostListener('mouseout', [r'$event'])
   void sliderOut(MouseEvent event) {
-    clear();
+    _refresh();
   }
 
   @HostListener('mousemove', [r'$event'])
   void checkOut(MouseEvent event) {
     if (_hueRect != null && ![saturation, hue, alpha].contains(event.target)) {
-      clear();
+      _refresh();
     }
   }
 
@@ -207,8 +236,7 @@ class ColorPickerComponent implements OnInit {
 
   void alphaClick(MouseEvent event) {
     _alphaOriginPos = alphaPos;
-    rgb = alphaMove(event);
-    _rgbChange.add(rgb);
+    _add(alphaMove(event));
   }
 
   Rgb alphaMove(MouseEvent event) {
@@ -236,10 +264,17 @@ class ColorPickerComponent implements OnInit {
         pointerHalfSize}px';
   }
 
-  void clear() {
+  void refresh() {
+    _refresh();
+    _cd.markForCheck();
+  }
+
+  void _refresh() {
+    _saturationRect = saturation.getBoundingClientRect();
+
     final rgb = _rgb.clone(a: 1);
-    final width = (_hueRect ?? hue.getBoundingClientRect()).width;
-    final alphaWidth = (_alphaRect ??= alpha.getBoundingClientRect()).width
+    final width = (_hueRect = hue.getBoundingClientRect()).width;
+    final alphaWidth = (_alphaRect = alpha.getBoundingClientRect()).width
         - alphaGutter;
 
     _hsv = RGBtoHSV(rgb);
@@ -248,17 +283,28 @@ class ColorPickerComponent implements OnInit {
     _huePos = '${(_hsv.h * width) - pointerHalfSize}px';
     _alphaPos = _alphaOriginPos ??
         '${(((1 - _rgb.a) * alphaWidth) - pointerHalfSize)}px';
-    _inputCss = _css = _rgb.toCss();
-    _hueCss = (_currentHsv ?? _hsv).toCss();
-    _hueRect = null;
+    _css = _rgb.toCss();
 
-    print('Blured');
+    if (!_invalidCss) {
+      _inputCss = _css;
+    }
+
+    _hueCss = ((_currentHsv ?? _hsv).clone()..s = 100..v = 100).toCss();
+    _hueRect = null;
   }
 
   @override
   void ngOnInit() {
-    rgb ??= Rgb(r: 140, g: 50, b: 10, a: 1);
+    rgb ??= defaultColor;
     _currentHsv = RGBtoHSV(_rgb.clone(a: 1));
-    clear();
+    _refresh();
+
+    _initiated = !manualInitiate;
+  }
+
+  void initiate() {
+    _initiated = true;
+    _currentHsv = RGBtoHSV(_rgb.clone(a: 1));
+    refresh();
   }
 }

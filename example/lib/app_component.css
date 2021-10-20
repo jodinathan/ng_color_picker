@@ -1,0 +1,38 @@
+:host {
+    display: block;
+    font-family: 'Roboto', sans-serif;
+}
+
+.input {
+    display: flex;
+    flex-flow: row nowrap;
+}
+
+.input > * {
+    width: 230px;
+    margin: 0 10px;
+}
+
+color-picker {
+    width: 230px;
+}
+
+.css {
+    text-align: center;
+    padding: 30px;
+    margin-top: -20%;
+}
+
+.desc {
+    text-align: center;
+}
+hr {
+    margin-top: 50px;
+}
+.desc a {
+}
+
+::ng-deep .popup-wrapper .popup .material-popup-content.content .main {
+    overflow: visible;
+}
+

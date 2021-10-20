@@ -1,3 +1,4 @@
+
 <div class="saturation-lightness slider" [style.background-color]="hueCss"
   #saturation (mousemove)="saturationMove" (mouseout)="sliderOut"
   (click)="click($event, ripple: false)">
@@ -29,8 +30,8 @@
 </div>
 
 <div class="css">
- <material-input label="CSS" floatingLabel [(ngModel)]="inputCss"
- (blur)="blur()">
+ <material-input [(ngModel)]="inputCss"
+ [error]="inputError" [displayBottomPanel]="false">
  </material-input>
 </div>
 
