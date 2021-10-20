@@ -7,6 +7,23 @@ targets:
         enabled: False
       ng_color_picker|scss_builder:
         enabled: True
+      build_web_compilers|entrypoint:
+        options:
+          #compiler: dart2js
+          dart2js_args:
+            - --fast-startup
+            - -O4
+            - --minify
+            - --trust-primitives
+            - --dump-info
+        release_options:
+          dart2js_args:
+            - --fast-startup
+            - -O4
+            - --minify
+            - --trust-primitives
+            #- --dump-info
+
   scss_builder:
     sources: ["lib/builder.dart"]
     dependencies:

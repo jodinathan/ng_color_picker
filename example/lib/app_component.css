@@ -1,5 +1,7 @@
 :host {
-    display: block;
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: center;
     font-family: 'Roboto', sans-serif;
 }
 
@@ -15,12 +17,12 @@
 
 color-picker {
     width: 230px;
+    background: white;
 }
 
 .css {
     text-align: center;
     padding: 30px;
-    margin-top: -20%;
 }
 
 .desc {
@@ -34,5 +36,9 @@ hr {
 
 ::ng-deep .popup-wrapper .popup .material-popup-content.content .main {
     overflow: visible;
+}
+::ng-deep .popup-wrapper .popup .material-popup-content.content header,
+::ng-deep .popup-wrapper .popup .material-popup-content.content footer {
+    display: none;
 }
 
