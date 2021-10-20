@@ -1,10 +1,10 @@
 name: ng_color_picker
-description: Simple color picker for AngularDart
-version: 0.0.1
+description: Simple and lightweight color picker component for AngularDart
+version: 0.0.2
 homepage: https://jodinathan.github.io/ng_color_picker/
 
 environment:
-  sdk: '>=2.8.1 <2.12.0'
+  sdk: '>=2.8.1 <3.0.0'
 
 dependencies:
   angular: ^6.0.1

@@ -17,23 +17,25 @@ extension PickerHsv on Hsv {
 }
 
 extension PickerRgb on Rgb {
-  String toCss() => 'rgba($r, $g, $b, ${a == 0 || a == 1 ?
-    '$a' : a.toStringAsFixed(2)})';
+  String toCss() =>
+      'rgba($r, $g, $b, ${a == 0 || a == 1 ? '$a' : a.toStringAsFixed(2)})';
 }
 
+/// Simple color picker for AngularDart.
+///
+/// Usage: <color-picker [(css)]="css"></color-picker>
 @Component(
-  selector: 'color-picker',
-  templateUrl: 'color_picker.html',
-  styleUrls: [ 'color_picker.scss.css' ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  directives: [
-    coreDirectives,
-    materialInputDirectives,
-    MaterialIconComponent,
-    MaterialRippleComponent,
-    MaterialInputComponent
-  ]
-)
+    selector: 'color-picker',
+    templateUrl: 'color_picker.html',
+    styleUrls: ['color_picker.scss.css'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    directives: [
+      coreDirectives,
+      materialInputDirectives,
+      MaterialIconComponent,
+      MaterialRippleComponent,
+      MaterialInputComponent
+    ])
 class ColorPickerComponent implements OnInit {
   final StreamController<Rgb> _rgbChange = StreamController<Rgb>();
   final StreamController<String> _cssChange = StreamController<String>();
@@ -54,14 +56,18 @@ class ColorPickerComponent implements OnInit {
     _inputError = null;
     _invalidCss = false;
   }
+
   Rgb get rgb => _rgb;
 
+  /// Makes the cursors invisible until manually call [initiate].
   @Input()
   bool manualInitiate = false;
 
+  /// RGB object outputs.
   @Output()
   Stream<Rgb> get rgbChange => _rgbChange.stream;
 
+  /// If the box should have a AngularComponents box-shadow style.
   @HostBinding('class.bordered')
   @Input()
   bool bordered = true;
@@ -76,6 +82,7 @@ class ColorPickerComponent implements OnInit {
 
   String _inputCss;
   String get inputCss => _inputCss;
+  /// CSS input: rgba() or #hex.
   @Input('css')
   set inputCss(String value) {
     _inputCss = value;
@@ -95,6 +102,7 @@ class ColorPickerComponent implements OnInit {
     }
   }
 
+  /// The output in the form of css rgba().
   @Output()
   Stream<String> get cssChange => _cssChange.stream;
 
@@ -158,11 +166,7 @@ class ColorPickerComponent implements OnInit {
       h /= 6;
     }
 
-    return Hsv(
-        h: h,
-        s: (s * SV_MAX).round(),
-        v: (v * SV_MAX).round()
-    );
+    return Hsv(h: h, s: (s * SV_MAX).round(), v: (v * SV_MAX).round());
   }
 
   void saturationMove(MouseEvent event) {
@@ -180,9 +184,9 @@ class ColorPickerComponent implements OnInit {
     final v = (1 - math.max(vraw, 0)) * SV_MAX;
 
     _hsv = Hsv(
-        h: h,
-        s: s,
-        v: v,
+      h: h,
+      s: s,
+      v: v,
     );
 
     _inputCss = _css = _hsv.clone(a: rgb.a).toCss();
@@ -258,10 +262,10 @@ class ColorPickerComponent implements OnInit {
   void _calcSaturationPos() {
     _saturationRect ??= saturation.getBoundingClientRect();
 
-    _saturationLeft = '${((_hsv.s / SV_MAX) * _saturationRect.width) -
-        pointerHalfSize}px';
-    _saturationTop = '${((1 - (_hsv.v / SV_MAX)) * _saturationRect.height) -
-        pointerHalfSize}px';
+    _saturationLeft =
+        '${((_hsv.s / SV_MAX) * _saturationRect.width) - pointerHalfSize}px';
+    _saturationTop =
+        '${((1 - (_hsv.v / SV_MAX)) * _saturationRect.height) - pointerHalfSize}px';
   }
 
   void refresh() {
@@ -274,8 +278,8 @@ class ColorPickerComponent implements OnInit {
 
     final rgb = _rgb.clone(a: 1);
     final width = (_hueRect = hue.getBoundingClientRect()).width;
-    final alphaWidth = (_alphaRect = alpha.getBoundingClientRect()).width
-        - alphaGutter;
+    final alphaWidth =
+        (_alphaRect = alpha.getBoundingClientRect()).width - alphaGutter;
 
     _hsv = RGBtoHSV(rgb);
 
@@ -289,7 +293,10 @@ class ColorPickerComponent implements OnInit {
       _inputCss = _css;
     }
 
-    _hueCss = ((_currentHsv ?? _hsv).clone()..s = 100..v = 100).toCss();
+    _hueCss = ((_currentHsv ?? _hsv).clone()
+          ..s = 100
+          ..v = 100)
+        .toCss();
     _hueRect = null;
   }
 
