@@ -217,7 +217,7 @@ packages:
       name: dart_internal
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.1.12-nullsafety.1"
+    version: "0.2.2"
   dart_style:
     dependency: transitive
     description:
@@ -225,6 +225,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.3.10"
+  dispose:
+    dependency: transitive
+    description:
+      name: dispose
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.0.5"
   file:
     dependency: transitive
     description:
@@ -343,7 +350,7 @@ packages:
       path: ".."
       relative: true
     source: path
-    version: "0.0.0"
+    version: "0.0.2"
   node_interop:
     dependency: transitive
     description:
@@ -562,4 +569,4 @@ packages:
     source: hosted
     version: "2.2.1"
 sdks:
-  dart: ">=2.10.0 <2.12.0"
+  dart: ">=2.12.0 <2.16.0"

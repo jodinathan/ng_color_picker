@@ -1,6 +1,6 @@
 
 <div class="saturation-lightness slider" [style.background-color]="hueCss"
-  #saturation (mousemove)="saturationMove" (mouseout)="sliderOut"
+  #saturation (mouseout)="sliderOut"
   (click)="click($event, ripple: false)">
  <material-ripple #saturationRipple></material-ripple>
  <div class="cursor" [style.left]="saturationLeft"

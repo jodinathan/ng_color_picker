@@ -4,6 +4,7 @@ import 'dart:math' as math;
 
 import 'package:angular/angular.dart';
 import 'package:angular_components/angular_components.dart';
+import 'package:dispose/dispose.dart';
 import 'package:lib_colors/lib_colors.dart';
 
 const RGB_MAX = 255.0;
@@ -36,10 +37,10 @@ extension PickerRgb on Rgb {
       MaterialRippleComponent,
       MaterialInputComponent
     ])
-class ColorPickerComponent implements OnInit {
+class ColorPickerComponent with Disposable implements OnInit {
   final StreamController<Rgb> _rgbChange = StreamController<Rgb>();
   final StreamController<String> _cssChange = StreamController<String>();
-  final Rgb defaultColor = Rgb(r: 71, g: 220, b: 220, a: 1);
+  final Rgb defaultColor = Rgb(r: 255, g: 255, b: 255, a: 1);
   final ChangeDetectorRef _cd;
 
   Hsv _currentHsv;
@@ -58,6 +59,8 @@ class ColorPickerComponent implements OnInit {
   }
 
   Rgb get rgb => _rgb;
+
+  StreamedIntervalTimer _saturationBeat;
 
   /// Makes the cursors invisible until manually call [initiate].
   @Input()
@@ -87,18 +90,20 @@ class ColorPickerComponent implements OnInit {
   set inputCss(String value) {
     _inputCss = value;
 
-    try {
-      final n = Rgb.parse(value);
+    if (value != null && value != _css) {
+      try {
+        final n = Rgb.parse(value);
 
-      rgb = n;
-      _currentHsv = RGBtoHSV(_rgb.clone(a: 1));
+        rgb = n;
+        _currentHsv = RGBtoHSV(_rgb.clone(a: 1));
 
-      if (_initiated) {
-        _refresh();
+        if (_initiated) {
+          _refresh();
+        }
+      } catch (e) {
+        _invalidCss = true;
+        _inputError = ' ';
       }
-    } catch (e) {
-      _invalidCss = true;
-      _inputError = ' ';
     }
   }
 
@@ -170,7 +175,12 @@ class ColorPickerComponent implements OnInit {
   }
 
   void saturationMove(MouseEvent event) {
+    if (event == null) {
+      return;
+    }
+
     _saturationRect ??= saturation.getBoundingClientRect();
+
     final posX = event.page.x - _saturationRect.left;
     final sraw = posX / _saturationRect.width;
     final posY = event.page.y - _saturationRect.top;
@@ -190,6 +200,7 @@ class ColorPickerComponent implements OnInit {
     );
 
     _inputCss = _css = _hsv.clone(a: rgb.a).toCss();
+    _cd.markForCheck();
   }
 
   void hueClick(MouseEvent event) {
@@ -274,12 +285,12 @@ class ColorPickerComponent implements OnInit {
   }
 
   void _refresh() {
-    _saturationRect = saturation.getBoundingClientRect();
-
     final rgb = _rgb.clone(a: 1);
-    final width = (_hueRect = hue.getBoundingClientRect()).width;
+    final width = hue.getBoundingClientRect().width;
     final alphaWidth =
-        (_alphaRect = alpha.getBoundingClientRect()).width - alphaGutter;
+        alpha.getBoundingClientRect().width - alphaGutter;
+
+    _clearBeats();
 
     _hsv = RGBtoHSV(rgb);
 
@@ -297,16 +308,26 @@ class ColorPickerComponent implements OnInit {
           ..s = 100
           ..v = 100)
         .toCss();
-    _hueRect = null;
+
+    _saturationRect = _alphaRect = _hueRect = null;
   }
 
   @override
   void ngOnInit() {
     rgb ??= defaultColor;
     _currentHsv = RGBtoHSV(_rgb.clone(a: 1));
-    _refresh();
+      _refresh();
+
+    _saturationBeat = streamedInterval(saturation.onMouseMove,
+        const Duration(milliseconds: 1), saturationMove);
 
     _initiated = !manualInitiate;
+  }
+
+  void _clearBeats() {
+    if (_initiated) {
+      _saturationBeat.clear();
+    }
   }
 
   void initiate() {
