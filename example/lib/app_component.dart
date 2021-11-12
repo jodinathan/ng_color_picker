@@ -50,6 +50,10 @@ class AppComponent {
   final popupPos = [RelativePosition.AdjacentRight,
     RelativePosition.OffsetBottomRight];
 
+  ColorPickerComponent? _popupPicker;
+
   @ViewChild('popupPicker')
-  ColorPickerComponent popupPicker;
+  set popupPicker(ColorPickerComponent picker) => _popupPicker;
+
+  ColorPickerComponent get popupPicker => _popupPicker!;
 }
