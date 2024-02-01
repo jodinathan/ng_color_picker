@@ -49,11 +49,11 @@
 
         &.alpha {
           width: calc(100% - 6px);
-          border-left-width: 4px;
+          border-left-width: 1px;
           border-left-color: #cdcdcd;
-          border-right-width: 4px;
+          border-right-width: 1px;
           border-right-color: white;
-          background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAAAQCAYAAAD06IYnAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AIWDwYQlZMa3gAAAWVJREFUaN7tmEGO6jAQRCsOArHgBpyAJYGjcGocxAm4A2IHpmoWE0eBH+ezmFlNvU06shJ3W6VEelWMUQAIIF9f6qZpimsA1LYtS2uF51/u27YVAFZVRUkEoGHdPV/sIcbIEIIkUdI/9Xa7neyv61+SWFUVAVCSct00TWn2fv6u3+Ecfd3tXzy/0+nEUu+SPjo/kqzrmiQpScN6v98XewfA8/lMkiLJ2WxGSUopcT6fM6U0NX9/frfbjev1WtfrlZfLhYfDQQHG/AIOlnGwjINlHCxjHCzjYJm/TJWdCwquJXseFFzGwDNNeiKMOJTO8xQdDQaeB29+K9efeLaBo9J7vdvtJj1RjFFjfiv7qv95tjx/7leSQgh93e1ffMeIp6O+YQjho/N791t1XVOSSI7N//K+4/GoxWLBx+PB5/Op5XLJ+/3OlJJWqxU3m83ovv5iGf8KjYNlHCxjHCzjYBkHy5gf5gusvQU7U37jTAAAAABJRU5ErkJggg==');
+          background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAJYAAAAQCAYAAAD06IYnAAAACXBIWXMAAAsTAAALEwEAmpwYAAAFJGlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4gPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iQWRvYmUgWE1QIENvcmUgOS4xLWMwMDIgNzkuZjM1NGVmYywgMjAyMy8xMS8wOS0xMjo0MDoyNyAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczpkYz0iaHR0cDovL3B1cmwub3JnL2RjL2VsZW1lbnRzLzEuMS8iIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0RXZ0PSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VFdmVudCMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIDI1LjQgKDIwMjMxMjA3Lm0uMjQyNiA0OTViMmQxKSAgKFdpbmRvd3MpIiB4bXA6Q3JlYXRlRGF0ZT0iMjAyNC0wMS0zMVQyMDowNDozNy0wMzowMCIgeG1wOk1vZGlmeURhdGU9IjIwMjQtMDEtMzFUMjA6MDc6MTMtMDM6MDAiIHhtcDpNZXRhZGF0YURhdGU9IjIwMjQtMDEtMzFUMjA6MDc6MTMtMDM6MDAiIGRjOmZvcm1hdD0iaW1hZ2UvcG5nIiBwaG90b3Nob3A6Q29sb3JNb2RlPSIzIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOmYzOTBmZGNmLTgwYjktNmM0MC05NTRlLWUxYzJlYzAwOTNjNCIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpmMzkwZmRjZi04MGI5LTZjNDAtOTU0ZS1lMWMyZWMwMDkzYzQiIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDpmMzkwZmRjZi04MGI5LTZjNDAtOTU0ZS1lMWMyZWMwMDkzYzQiPiA8eG1wTU06SGlzdG9yeT4gPHJkZjpTZXE+IDxyZGY6bGkgc3RFdnQ6YWN0aW9uPSJjcmVhdGVkIiBzdEV2dDppbnN0YW5jZUlEPSJ4bXAuaWlkOmYzOTBmZGNmLTgwYjktNmM0MC05NTRlLWUxYzJlYzAwOTNjNCIgc3RFdnQ6d2hlbj0iMjAyNC0wMS0zMVQyMDowNDozNy0wMzowMCIgc3RFdnQ6c29mdHdhcmVBZ2VudD0iQWRvYmUgUGhvdG9zaG9wIDI1LjQgKDIwMjMxMjA3Lm0uMjQyNiA0OTViMmQxKSAgKFdpbmRvd3MpIi8+IDwvcmRmOlNlcT4gPC94bXBNTTpIaXN0b3J5PiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PlNbMYQAAAFOSURBVGje7ZjJjYQwEEXtwvQNkQMhsERNKCxHIiADDgjEMpTbbgHDJk3f5j/J+CP5+5dRCSTkPM8khJDLIDO0rqqKmqYhpZR8vV7Uti05jiNd16Wu6yhJkrXn1x55nhMjF8Zx1JpnvmcdhuFhrh1lWcppmni99qw0LVrGcXyYazXnyzdkvFrb80ZRdFo7z0VRaI9Zr318b/WSf1q7PT/nsTbejTb5Z3tIk/+pd6+fPD9b+1F9q/Mf7sH5V/XdPT8WAHwdNBZAYwE0FkBjAYDGAmgs8J9RfEnTVARBIHzfF3VdC8/zRBRFl8aiKIRSSvR9r2f+xTMMgyAiPeI4vvRnWaY9vHYcx43m+Uk+e6Zp0vNe3+WXZSnmedaa1+/1k3yG175/b231k/yz2lnf+W3+Ue3M0/rP+KsfbyyATyFAYwE0FgBoLIDGAmgsAL7MD7uppZpkT2c+AAAAAElFTkSuQmCC');
 
           &:before {
             content: " ";
@@ -88,7 +88,7 @@
       top: -2px;
       cursor: default;
       pointer-events: none;
-      display: none;
+
     }
 
     &.saturation-lightness {
@@ -112,26 +112,37 @@
     text-align: center;
     padding: 0 10px;
 
-    material-input {
-      width: 100%;
-      color: #666;
-
-      ::ng-deep input {
-        text-align: center;
-      }
-    }
   }
 
   &.bordered {
-    box-shadow: 0 4px 5px 0 rgb(0 0 0 / 14%),
-    0 1px 10px 0 rgb(0 0 0 / 12%), 0 2px 4px -1px rgb(0 0 0 / 20%);
-  }
-
-  &.initiated.rectOk {
-    .slider {
-      .cursor {
-        display: block;
-      }
-    }
+    // box-shadow: 0 4px 5px 0 rgb(0 0 0 / 14%),
+    // 0 1px 10px 0 rgb(0 0 0 / 12%), 0 2px 4px -1px rgb(0 0 0 / 20%);
+    border: solid 1px #6666664d;
   }
 }
+
+//cursor: url('path-to-image.png'), auto;
+input {
+  border: 1px transparent solid;
+  outline: none;
+  box-shadow: none;
+  padding-block: 1px;
+  padding-inline: 2px;
+  padding-bottom: 8px;
+  font-size: 15px;
+  color: #666;
+  text-align: center;
+  margin: 0;
+  background-color: transparent;
+  width: 100%;
+  border-bottom: 1px transparent solid;
+  outline: none;
+}
+
+input[type=text]:focus {
+  border-bottom: 1px #4285f4 solid;
+}
+
+
+
+//----------------------------------------------------------------------------------------------
