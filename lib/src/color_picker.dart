@@ -1,11 +1,13 @@
+// ignore_for_file: constant_identifier_names
 import 'dart:async';
 import 'dart:html';
 import 'dart:math' as math;
-
-import 'package:angular/angular.dart';
-import 'package:angular_components/angular_components.dart';
-import 'package:dispose/dispose.dart';
-import 'package:lib_colors/lib_colors.dart';
+import 'package:ngdart/angular.dart';
+import 'package:ngforms/ngforms.dart';
+import 'deps/color/lib_colors.dart';
+import 'deps/dispose/generic.dart';
+//import 'deps/dispose/interval.dart';
+import 'deps/deferred_content_aware.dart';
 
 const RGB_MAX = 255.0;
 const HUE_MAX = 360.0;
@@ -14,7 +16,7 @@ const pointerHalfSize = 10;
 const alphaGutter = 8, alphaHalfGutter = 4;
 
 extension PickerHsv on Hsv {
-  String toCss() => toRgb!.toCss();
+  String toCss() => toRgb.toCss();
 }
 
 extension PickerRgb on Rgb {
@@ -28,53 +30,34 @@ extension PickerRgb on Rgb {
 @Component(
     selector: 'color-picker',
     templateUrl: 'color_picker.html',
-    styleUrls: ['color_picker.scss.css'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
+    styleUrls: ['color_picker.css'],
+    changeDetection: ChangeDetectionStrategy.onPush,
     directives: [
       coreDirectives,
-      materialInputDirectives,
-      MaterialIconComponent,
-      MaterialRippleComponent,
-      MaterialInputComponent
+      formDirectives,
     ])
-class ColorPickerComponent with Disposable implements OnInit {
+class ColorPickerComponent with Disposable implements OnInit, OnDestroy {
   final StreamController<Rgb> _rgbChange = StreamController<Rgb>();
   final StreamController<String> _cssChange = StreamController<String>();
   final Rgb defaultColor = Rgb(r: 255, g: 255, b: 255, a: 1);
   final ChangeDetectorRef _cd;
+
+  // ignore: unused_field
   final NgZone _zone;
+  // ignore: unused_field
   final DeferredContentAware? _parent;
+
   Hsv? _currentHsv;
 
-  bool _initiated = false;
-  @HostBinding('class.initiated')
-  bool get initiated => _initiated;
-
-  bool _rectOk = false;
-  @HostBinding('class.rectOk')
-  bool get rectOk => !_observeResize || _rectOk;
+  StreamSubscription<MouseEvent>? ssMousemove;
+  StreamSubscription<MouseEvent>? ssMousedown;
+  StreamSubscription<MouseEvent>? ssMouseup;
 
   ColorPickerComponent(this._cd, this._zone, @Optional() this._parent) {
-    final par = _parent;
-
-    if (par != null) {
-      _observeResize = true;
-
-      each(par.contentVisible, (bool visible) {
-        _zone.runAfterChangesObserved(() {
-          _rectOk = visible;
-
-          if (visible) {
-            _refresh();
-          }
-
-          _cd.markForCheck();
-        });
-      });
-    }
+    ssMousemove = document.body?.onMouseMove.listen(onMouseMove);
+    ssMousedown = document.body?.onMouseDown.listen(onMousedown);
+    ssMouseup = document.body?.onMouseUp.listen(onMouseup);
   }
-
-  bool _observeResize = false;
 
   Rgb? _rgb;
   @Input()
@@ -85,8 +68,6 @@ class ColorPickerComponent with Disposable implements OnInit {
   }
 
   Rgb? get rgb => _rgb;
-
-  late StreamedIntervalTimer _saturationBeat;
 
   /// Makes the cursors invisible until manually call [initiate].
   @Input()
@@ -111,6 +92,7 @@ class ColorPickerComponent with Disposable implements OnInit {
 
   String? _inputCss;
   String? get inputCss => _inputCss;
+
   /// CSS input: rgba() or #hex.
   @Input('css')
   set inputCss(String? value) {
@@ -121,11 +103,9 @@ class ColorPickerComponent with Disposable implements OnInit {
         final n = Rgb.parse(value);
 
         rgb = n;
-        _currentHsv = RGBtoHSV(_rgb!.clone(a: 1));
+        _currentHsv = rgbTohsv(_rgb!.clone(a: 1));
 
-        if (_initiated) {
-          _refresh();
-        }
+        _refresh();
       } catch (e) {
         _invalidCss = true;
         _inputError = ' ';
@@ -140,50 +120,33 @@ class ColorPickerComponent with Disposable implements OnInit {
   String? _hueCss;
   String? get hueCss => _hueCss;
 
-  String? _huePos;
-  String? get huePos => _huePos;
+  late String huePos;
 
-  String? _alphaPos, _alphaOriginPos;
-  String? get alphaPos => _alphaPos;
+  String? alphaOriginPos;
+  String? alphaPos;
 
-  String? _saturationLeft;
-  String? get saturationLeft => _saturationLeft;
+  String? saturationLeft;
 
-  String? _saturationTop;
-  String? get saturationTop => _saturationTop;
+  String? saturationTop;
 
-  Hsv? _hsv;
+  late Hsv _hsv;
 
-  DivElement? _hue;
   @ViewChild('hue')
-  set hue(DivElement? element) => _hue = element;
-  DivElement get hue => _hue!;
+  DivElement? hue;
 
-  DivElement? _saturation;
   @ViewChild('saturation')
-  set saturation(DivElement? element) => _saturation = element;
-  DivElement get saturation => _saturation!;
+  DivElement? saturation;
 
-  DivElement? _alpha;
   @ViewChild('alpha')
-  set alpha(DivElement? element) => _alpha = element;
-  DivElement get alpha => _alpha!;
+  DivElement? alpha;
+  num alphaValue = 1;
+  num hueValue = 1;
 
-  MaterialRippleComponent? _saturationRipple;
-  @ViewChild('saturationRipple')
-  set saturationRipple(MaterialRippleComponent? element) =>
-      _saturationRipple = element;
-  MaterialRippleComponent get saturationRipple => _saturationRipple!;
+  Rectangle? get saturationRect => saturation!.getBoundingClientRect();
+  Rectangle? get hueRect => hue?.getBoundingClientRect();
+  Rectangle? get alphaRect => alpha?.getBoundingClientRect();
 
-  MaterialRippleComponent? _selectedRipple;
-  @ViewChild('selectedRipple')
-  set selectedRipple(MaterialRippleComponent? element) =>
-      _selectedRipple = element;
-  MaterialRippleComponent get selectedRipple => _selectedRipple!;
-
-  Rectangle? _hueRect, _saturationRect, _alphaRect;
-
-  Hsv RGBtoHSV(Rgb rgb) {
+  Hsv rgbTohsv(Rgb rgb) {
     // It converts [0,255] format, to [0,1]
     final r = (rgb.r == RGB_MAX) ? 1 : (rgb.r % RGB_MAX / (RGB_MAX));
     final g = (rgb.g == RGB_MAX) ? 1 : (rgb.g % RGB_MAX / (RGB_MAX));
@@ -212,38 +175,50 @@ class ColorPickerComponent with Disposable implements OnInit {
     return Hsv(h: h, s: (s * SV_MAX).round(), v: (v * SV_MAX).round());
   }
 
-  void saturationMove(MouseEvent? event) {
-    if (event == null) {
-      return;
+  void updateSaturation(num posX, num posY) {
+    if (posX < 1) {
+      posX = 0;
+    }
+    if (posX > saturationRect!.width) {
+      posX = saturationRect!.width;
+    }
+    if (posY < 1) {
+      posY = 0;
+    }
+    if (posY > saturationRect!.height) {
+      posY = saturationRect!.height;
     }
 
-    _saturationRect ??= saturation.getBoundingClientRect();
+    final sraw = posX / saturationRect!.width;
+    final vraw = posY / saturationRect!.height;
 
-    final posX = event.page.x - _saturationRect!.left;
-    final sraw = posX / _saturationRect!.width;
-    final posY = event.page.y - _saturationRect!.top;
-    final vraw = posY / _saturationRect!.height;
+    saturationLeft = '${posX - pointerHalfSize}px';
+    saturationTop = '${posY - pointerHalfSize}px';
 
-    _saturationLeft = '${posX - pointerHalfSize}px';
-    _saturationTop = '${posY - pointerHalfSize}px';
-
-    final h = (_hsv ?? RGBtoHSV(_rgb!)).h;
+    //final h = _hsv.h;
     final num s = math.max(sraw, 0) * SV_MAX;
     final num v = (1 - math.max(vraw, 0)) * SV_MAX;
 
-    _hsv = Hsv(
-      h: h,
-      s: s,
-      v: v,
-    );
+    //_hsv = Hsv(h: h, s: s, v: v, a: alphaValue);
+    _hsv.s = s;
+    _hsv.v = v;
 
-    _inputCss = _css = _hsv!.clone(a: rgb!.a).toCss();
-    _cd.markForCheck();
+    updateInputVal();
   }
 
-  void hueClick(MouseEvent event) {
-    click(event);
-    _currentHsv = _hsv!.clone(a: 1);
+  void _calcSaturationPos() {
+    lastSaturationPosX = ((_hsv.s / SV_MAX) * saturationRect!.width);
+    lastSaturationPosY = ((1 - (_hsv.v / SV_MAX)) * saturationRect!.height);
+
+    saturationLeft = '${lastSaturationPosX - pointerHalfSize}px';
+    saturationTop = '${lastSaturationPosY - pointerHalfSize}px';
+  }
+
+  void saturationClick(MouseEvent event) {
+    final posX = event.page.x - saturationRect!.left;
+    final posY = event.page.y - saturationRect!.top;
+    updateSaturation(posX, posY);
+    //_add((_hsv!.clone(a: rgb!.a)).toRgb);
   }
 
   void _add(Rgb newRgb) {
@@ -252,69 +227,105 @@ class ColorPickerComponent with Disposable implements OnInit {
     _cssChange.add(newRgb.toCss());
   }
 
-  void click(MouseEvent event, {bool ripple = true}) {
-    _add((_hsv!.clone(a: rgb!.a)).toRgb!);
-
-    if (ripple) {
-      saturationRipple.createRipple(event.client.x as int, event.client.y as int);
-    }
-
-    selectedRipple.createRipple(event.client.x as int, event.client.y as int);
-  }
-
   @HostListener('mouseout', [r'$event'])
   void sliderOut(MouseEvent event) {
-    _refresh();
+    //_refresh();
   }
 
   @HostListener('mousemove', [r'$event'])
   void checkOut(MouseEvent event) {
-    if (_hueRect != null && ![saturation, hue, alpha].contains(event.target)) {
-      _refresh();
+    // if (hueRect != null && ![saturation, hue, alpha].contains(event.target)) {
+    //   _refresh();
+    // }
+  }
+
+  bool isHueMove = false;
+  bool isAlphaMove = false;
+  bool isSaturationMove = false;
+  num lastSaturationPosX = 0;
+  num lastSaturationPosY = 0;
+
+  /// global mouse move event handler
+  void onMouseMove(MouseEvent event) {
+    if (isHueMove) {
+      final posX = event.page.x - hueRect!.left;
+      updateHue(posX);
+      //updateSaturation(lastSaturationPosX, lastSaturationPosY);
+    }
+    if (isAlphaMove) {
+      final posX = event.page.x - (alphaRect!.left + alphaHalfGutter);
+      updateAlpha(posX);
+    }
+    if (isSaturationMove) {
+      lastSaturationPosX = event.page.x - saturationRect!.left;
+      lastSaturationPosY = event.page.y - saturationRect!.top;
+      updateSaturation(lastSaturationPosX, lastSaturationPosY);
     }
   }
 
-  void hueMove(MouseEvent event) {
-    _hueRect ??= hue.getBoundingClientRect();
-    final pos = event.page.x - _hueRect!.left;
-    final v = pos / _hueRect!.width;
+  void onMousedown(MouseEvent event) {
+    isHueMove = event.target == hue;
+    isAlphaMove = event.target == alpha;
+    isSaturationMove = event.target == saturation;
+  }
 
-    _huePos = '${pos - pointerHalfSize}px';
-    _hsv = Hsv(h: math.max(v, -0), s: 100, v: 100);
-    _calcSaturationPos();
+  void onMouseup(MouseEvent event) {
+    isHueMove = false;
+    isAlphaMove = false;
+    isSaturationMove = false;
+  }
 
-    _hueCss = _hsv!.toCss();
-    _inputCss = _css = _hsv!.clone(a: rgb!.a).toCss();
+  void hueClick(MouseEvent event) {
+    final pos = event.page.x - hueRect!.left;
+    updateHue(pos);
+  }
+
+  void updateHue(num posX) {
+    if (posX < 1) {
+      posX = 0;
+    }
+    if (posX > hueRect!.width) {
+      posX = hueRect!.width;
+    }
+    final v = posX / hueRect!.width;
+    huePos = '${posX - pointerHalfSize}px';
+
+    hueValue = math.max(v, -0);
+    _hsv.h = hueValue;
+
+    _hueCss = Hsv(h: hueValue, s: 100, v: 100).toCss();
+    updateInputVal();
   }
 
   void alphaClick(MouseEvent event) {
-    _alphaOriginPos = alphaPos;
-    _add(alphaMove(event));
+    alphaOriginPos = alphaPos;
+    final pos = event.page.x - (alphaRect!.left + alphaHalfGutter);
+    updateAlpha(pos);
   }
 
-  Rgb alphaMove(MouseEvent event) {
-    _alphaRect ??= alpha.getBoundingClientRect();
-    final pos = event.page.x - (_alphaRect!.left + alphaHalfGutter);
-    var a = pos / (_alphaRect!.width - alphaGutter);
+  void updateAlpha(num posX) {
+    if (posX < 1) {
+      posX = 0;
+    }
+    if (posX > alphaRect!.width) {
+      posX = alphaRect!.width;
+    }
+
+    var a = posX / (alphaRect!.width - alphaGutter);
     final mod = math.pow(10.0, 2);
 
     a = (a * mod).round().toDouble() / mod;
-    _alphaPos = '${pos - pointerHalfSize}px';
+    alphaPos = '${posX - pointerHalfSize}px';
 
-    final h2 = _rgb!.clone(a: 1 - math.min(math.max(a, 0), 1));
-
-    _inputCss = _css = h2.toCss();
-
-    return h2;
+    alphaValue = 1 - math.min(math.max(a, 0), 1);
+    _hsv.a = alphaValue;
+    updateInputVal();
   }
 
-  void _calcSaturationPos() {
-    _saturationRect ??= saturation.getBoundingClientRect();
-
-    _saturationLeft =
-        '${((_hsv!.s / SV_MAX) * _saturationRect!.width) - pointerHalfSize}px';
-    _saturationTop =
-        '${((1 - (_hsv!.v / SV_MAX)) * _saturationRect!.height) - pointerHalfSize}px';
+  void updateInputVal() {
+    _inputCss = _css = _hsv.toCss();
+     _cd.markForCheck();
+     _add(_hsv.toRgb);
   }
 
   void refresh() {
@@ -324,17 +335,14 @@ class ColorPickerComponent with Disposable implements OnInit {
 
   void _refresh() {
     final rgb = _rgb!.clone(a: 1);
-    final width = hue.getBoundingClientRect().width;
-    final alphaWidth =
-        alpha.getBoundingClientRect().width - alphaGutter;
+    final width = hueRect!.width;
+    final alphaWidth = alphaRect!.width - alphaGutter;
 
-    _clearBeats();
-
-    _hsv = RGBtoHSV(rgb);
+    _hsv = rgbTohsv(rgb);
 
     _calcSaturationPos();
-    _huePos = '${(_hsv!.h * width) - pointerHalfSize}px';
-    _alphaPos = _alphaOriginPos ??
+    huePos = '${(_hsv.h * width) - pointerHalfSize}px';
+    alphaPos = alphaOriginPos ??
         '${(((1 - _rgb!.a) * alphaWidth) - pointerHalfSize)}px';
     _css = _rgb!.toCss();
 
@@ -342,37 +350,23 @@ class ColorPickerComponent with Disposable implements OnInit {
       _inputCss = _css;
     }
 
-    _hueCss = ((_currentHsv ?? _hsv)!.clone()
+    _hueCss = ((_currentHsv ?? _hsv).clone()
           ..s = 100
           ..v = 100)
         .toCss();
-
-    _saturationRect = _alphaRect = _hueRect = null;
   }
 
   @override
   void ngOnInit() {
     rgb ??= defaultColor;
-    _currentHsv = RGBtoHSV(_rgb!.clone(a: 1));
+    _currentHsv = rgbTohsv(_rgb!.clone(a: 1));
     _refresh();
-
-    _saturationBeat = streamedInterval(saturation.onMouseMove,
-        const Duration(milliseconds: 1), saturationMove);
-
-    _initiated = !manualInitiate;
   }
 
-  void _clearBeats() {
-    if (_initiated) {
-      _saturationBeat.clear();
-    }
-  }
-
-  void initiate() {
-    if (!_initiated) {
-      _initiated = true;
-      _currentHsv = RGBtoHSV(_rgb!.clone(a: 1));
-      refresh();
-    }
+  @override
+  void ngOnDestroy() {
+    ssMousemove?.cancel();
+    ssMousedown?.cancel();
+    ssMouseup?.cancel();
   }
 }

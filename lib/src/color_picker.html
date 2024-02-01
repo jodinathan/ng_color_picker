@@ -1,38 +1,26 @@
-
-<div class="saturation-lightness slider" [style.background-color]="hueCss"
-  #saturation (mouseout)="sliderOut"
-  (click)="click($event, ripple: false)">
- <material-ripple #saturationRipple></material-ripple>
- <div class="cursor" [style.left]="saturationLeft"
- [style.top]="saturationTop"></div>
+<div class="saturation-lightness slider" [style.background-color]="hueCss" #saturation 
+    (click)="saturationClick($event)">
+    <div class="cursor" [style.left]="saturationLeft" [style.top]="saturationTop"></div>
 </div>
 
 <div class="hue-alpha box">
- <div class="left">
-  <div class="selected-color-background"></div>
+    <div class="left">
+        <div class="selected-color-background"></div>
+        <div class="selected-color" [style.background-color]="css"></div>
+    </div>
 
-  <div class="selected-color" [style.background-color]="css">
-   <material-ripple #selectedRipple></material-ripple>
-  </div>
- </div>
-
- <div class="right">
-  <div class="hue slider" #hue (mousemove)="hueMove" (mouseout)="sliderOut"
-  (click)="hueClick">
-    <div [style.left]="huePos" class="cursor"></div>
-  </div>
-
-  <div class="alpha slider" #alpha (mousemove)="alphaMove($event)"
-    (mouseout)="sliderOut" (click)="alphaClick">
-    <div [style.left]="alphaPos" class="cursor"></div>
-  </div>
- </div>
+    <div class="right">
+        <div class="hue slider" #hue (click)="hueClick">
+            <div [style.left]="huePos" class="cursor"></div>
+        </div>
+        <div class="alpha slider" #alpha (click)="alphaClick">
+            <div [style.left]="alphaPos" class="cursor"></div>
+        </div>
+    </div>
 </div>
 
 <div class="css">
- <material-input [(ngModel)]="inputCss"
- [error]="inputError" [displayBottomPanel]="false">
- </material-input>
+    <input type="text" [(ngModel)]="inputCss">
 </div>
 
 <!--<div style="width: 200px; height: 200px;"
